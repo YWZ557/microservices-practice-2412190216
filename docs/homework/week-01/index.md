@@ -31,3 +31,17 @@
 # 为什么作业需要提供可重复运行的测试或验证脚本
 
 保证结果可以复现，快速验证功能的正确性
+
+
+
+# 环境检查
+
+![604301cef6feaf14cee7ea0ec62b4347](D:\microservices‑practice‑2412190216\docs\homework\week-01\screenshots\604301cef6feaf14cee7ea0ec62b4347.png)
+
+![9819700e369abffe5835f80092d232a5](D:\microservices‑practice‑2412190216\docs\homework\week-01\screenshots\9819700e369abffe5835f80092d232a5.png)
+
+
+
+![6dbc5b8e3752c13c7ecdc0f256a878bd](D:\microservices‑practice‑2412190216\docs\homework\week-01\screenshots\6dbc5b8e3752c13c7ecdc0f256a878bd.png)
+
+![22952768771e1c977c1aeb87f1aa855f](D:\microservices‑practice‑2412190216\docs\homework\week-01\screenshots\22952768771e1c977c1aeb87f1aa855f.png)![674b425e7ae3e5d1941c5788f0a7e3fa](D:\microservices‑practice‑2412190216\docs\homework\week-01\screenshots\674b425e7ae3e5d1941c5788f0a7e3fa.png)
