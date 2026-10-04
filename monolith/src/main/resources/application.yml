@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: monolith
+# 服务端口默认8080
+server:
+  port: 8080
+
+# actuator暴露健康端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

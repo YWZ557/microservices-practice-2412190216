@@ -1,0 +1,22 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.8)
+
+2026-10-04T17:19:20.065+08:00  INFO 285404 --- [monolith] [           main] com.zjgsu.zyw.MonolithApplication        : Starting MonolithApplication v0.0.1-SNAPSHOT using Java 25.0.4.1 with PID 285404 (D:\microservices‑practice‑2412190216\monolith\target\monolith-0.0.1-SNAPSHOT.jar started by ASUS in D:\microservices‑practice‑2412190216\monolith)
+2026-10-04T17:19:20.072+08:00  INFO 285404 --- [monolith] [           main] com.zjgsu.zyw.MonolithApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:19:22.627+08:00  INFO 285404 --- [monolith] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-04T17:19:22.665+08:00  INFO 285404 --- [monolith] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-04T17:19:22.666+08:00  INFO 285404 --- [monolith] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-04T17:19:22.747+08:00  INFO 285404 --- [monolith] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2563 ms
+2026-10-04T17:19:24.046+08:00  INFO 285404 --- [monolith] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-10-04T17:19:24.218+08:00  INFO 285404 --- [monolith] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-10-04T17:19:24.234+08:00  INFO 285404 --- [monolith] [           main] com.zjgsu.zyw.MonolithApplication        : Started MonolithApplication in 5.241 seconds (process running for 6.141)
+2026-10-04T17:19:48.621+08:00  INFO 285404 --- [monolith] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-04T17:19:48.622+08:00  INFO 285404 --- [monolith] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-04T17:19:48.626+08:00  INFO 285404 --- [monolith] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms

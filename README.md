@@ -103,3 +103,51 @@ A [读者登录系统] --> B [检索目标图书] B --> C {图书在馆？} C --
 4. **消息通知**：当被预约图书归还、图书逾期时，发送消息通知读者。
 5. **服务拆分**：按业务拆分模块，图书服务、借阅服务、用户服务。
 6. **监控与部署**：增加日志、异常监控；项目打包，完成服务部署。
+
+## 运行环境与操作命令
+
+### 一、环境要求
+
+| 工具     | 版本要求   | 说明                                                         |
+| :------- | :--------- | :----------------------------------------------------------- |
+| JDK      | Java 25    | 工程pom.xml指定java.version=25，项目编译、运行必须使用JDK25； |
+| Maven    | 3.9 及以上 | 项目内置Maven Wrapper 3.9.16                                 |
+| 服务端口 | 8080       | 项目默认端口为8080，启动前需确认该端口未被其他程序占用，避免端口冲突导致启动失败 |
+
+### 二、启动与测试命令
+
+所有操作命令均需在项目根目录下的 `monolith/` 目录内执行，区分Windows、macOS/Linux系统：
+
+```Plain
+# 进入项目工程目录
+cd monolith
+
+# Windows系统：切换JDK25环境（非默认环境必执行）
+$env:JAVA_HOME = "D:\JAVA25"
+
+# 1. 编译打包（跳过测试，快速构建项目）
+# Windows
+./mvnw.cmd clean package -DskipTests
+# macOS / Linux
+./mvnw clean package -DskipTests
+
+# 2. 启动项目（两种方式二选一）
+# 方式一：运行打包后的jar包
+java -jar target/monolith-0.0.1-SNAPSHOT.jar
+# 方式二：Maven插件直接启动
+# Windows
+./mvnw.cmd spring-boot:run
+# macOS / Linux
+./mvnw spring-boot:run
+
+# 3. 执行项目单元测试（验证应用上下文可正常加载）
+# Windows
+./mvnw.cmd test
+# macOS / Linux
+./mvnw test
+```
+
+### 三、接口验证地址
+
+- 项目测试GET接口：`http://localhost:8080/api/hello`
+- 系统健康检查接口：`http://localhost:8080/actuator/health`，正常返回状态为 UP
