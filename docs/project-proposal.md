@@ -58,3 +58,33 @@
 | status      | 枚举       | BORROWED / RETURNED / OVERDUE / LOST |
 | overdueDays | int        | 逾期天数                             |
 | fineAmount  | BigDecimal | 罚款金额                             |
+
+
+
+# 业务建模（第 04 周）
+
+## 本周实现的核心业务流程
+
+场景编号 SC-01：**图书借阅流程（借书 → 校验 → 生成借阅记录 → 库存扣减）**，本周聚焦 “借出” 这一原子业务段：
+
+1. 读者（Reader）提交借书请求，携带 `readerId` 与 `bookId`。
+2. 系统根据 `bookId` 查询图书，校验图书馆藏状态为 `AVAILABLE`（在馆）且 `availableCount > 0`。
+3. 校验该读者当前在借数量是否已达到最大借阅上限（`MAX_BORROW_LIMIT`）。
+4. 校验通过后，生成一条 `BORROWED` 状态的 `BorrowRecord`，并执行图书库存 `availableCount - 1`。
+5. 返回借阅成功，记录 `borrowDate` 与 `dueDate`。
+
+> 还书、逾期罚款、预约排队属于后续迭代，本周只落地 “借出” 这一闭环业务段。
+
+## 参与流程的业务实体及关系
+
+表格
+
+| 实体                     | 职责                                         | 与其它实体关系                                               |
+| ------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
+| Book（图书）             | 承载图书档案与馆藏库存，是借阅校验的第一入口 | 1 本 Book 对应 0..N 条 BorrowRecord（一对多）                |
+| BorrowRecord（借阅记录） | 记录一次借出 / 归还的完整生命周期与罚款信息  | 多条 BorrowRecord 归属 1 本 Book（多对一），并关联 1 名 Reader |
+
+### 需要在 Service 中检查的业务规则
+
+- **规则 BR-01（借阅数量上限）**：单名读者的当前在借数量不得超过上限 `MAX_BORROW_LIMIT`（本周设为 5）。`BorrowService.borrow()` 在生成借阅记录前，必须统计该读者 `status = BORROWED` 的记录数，超限则抛出业务异常并拒绝借阅。
+- **规则 BR-02（库存与状态一致性）**：仅当图书 `status = AVAILABLE` 且 `availableCount > 0` 时允许借出；借出后 `availableCount` 减 1，且始终满足不变量 `0 <= availableCount <= totalCount`。

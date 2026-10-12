@@ -1,6 +1,23 @@
 spring:
   application:
     name: monolith
+  datasource:
+    url: jdbc:mysql://localhost:3306/library
+    username: "root"
+    password: "123456"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+      continue-on-error: false
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
 # 服务端口默认8080
 server:
   port: 8080

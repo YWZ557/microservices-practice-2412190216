@@ -151,3 +151,64 @@ java -jar target/monolith-0.0.1-SNAPSHOT.jar
 
 - 项目测试GET接口：`http://localhost:8080/api/hello`
 - 系统健康检查接口：`http://localhost:8080/actuator/health`，正常返回状态为 UP
+
+## 一、MySQL 安装（本机已装好）
+
+| 项目       | 实际情况                                                    |
+| ---------- | ----------------------------------------------------------- |
+| 版本       | MySQL **8.0.46** Community Server                           |
+| 安装目录   | `C:\Program Files\MySQL\MySQL Server 8.0`                   |
+| 服务名     | `MySQL80`（Windows 服务，当前状态 **Running**，已开机自启） |
+| 客户端命令 | `C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe`     |
+
+- 
+
+------
+
+## 二、建库（`library` 库已存在）
+
+我查过了，**`library` 数据库已经建好**，里面已经有表和数据：
+
+- `book` 表：**5 条**数据
+- `borrow_record` 表：**6 条**数据
+
+
+
+sql
+
+
+
+```
+CREATE DATABASE IF NOT EXISTS library
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+```
+
+命令行执行方式：
+
+powershell
+
+
+
+```
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS library DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+```
+
+------
+
+## 三、连接配置
+
+`application.yml` 当前配置是：
+
+yaml
+
+
+
+```
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/library
+    username: "root"
+    password: "123456"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
