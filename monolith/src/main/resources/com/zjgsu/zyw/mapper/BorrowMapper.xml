@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zjgsu.zyw.mapper.BorrowMapper">
+    <select id="getBorrowRecordById" resultType="com.zjgsu.zyw.pojo.enity.BorrowRecord">
+        select * from borrow_record where reader_id = #{readerId}
+    </select>
+    <insert id="CreateRecord">
+        insert into borrow_record
+        SET book_id     = #{bookId},
+            reader_id   = #{readerId},
+            borrow_date = #{borrowDate},
+            due_date    = #{dueDate},
+            status      = #{status}
+    </insert>
+
+</mapper>

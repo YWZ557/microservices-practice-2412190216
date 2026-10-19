@@ -6,15 +6,12 @@ spring:
     username: "root"
     password: "123456"
     driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: none
-    open-in-view: false
   sql:
     init:
       mode: always
       continue-on-error: false
 mybatis:
+  mapper-locations: classpath*:com/zjgsu/zyw/mapper/*.xml
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true

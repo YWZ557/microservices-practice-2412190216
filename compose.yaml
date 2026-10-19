@@ -1,0 +1,92 @@
+# ============================================================
+# 图书馆借阅系统 · 容器编排（第 05 周）
+# ------------------------------------------------------------
+# 一键启动：docker compose up -d --build
+# 停止（保留数据）：docker compose down
+# 停止并删除数据卷：docker compose down -v
+# ------------------------------------------------------------
+# 构建上下文指向 ./monolith，镜像由 monolith/Dockerfile 多阶段构建
+# 环境变量默认值见仓库根目录 .env.example（复制为 .env 后自动生效）
+# ============================================================
+
+name: library
+
+services:
+
+  # ---------------- MySQL 数据库 ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: library-mysql
+    restart: unless-stopped
+    # 官方 mysql 镜像的 entrypoint 会在首个参数以 '-' 开头时自动补上 mysqld，
+    # 因此这里只传 mysqld 的参数即可。
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      # root 密码为必填项，否则镜像拒绝启动
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      # 允许 root 从其它容器/主机连接，方便用客户端排查数据
+      MYSQL_ROOT_HOST: "%"
+      # 首次启动自动创建业务库与业务账号
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-library}
+      MYSQL_USER: ${MYSQL_USER:-libuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lib123456}
+    ports:
+      # 宿主机端口可改（本地已装 MySQL 时改成 3307 即可）
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      # 命名卷：容器删除/重建后数据仍在
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # 用 mysqladmin ping 判断数据库真正可用，供 app 的 depends_on 使用
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - library-net
+
+  # ---------------- Spring Boot 应用 ----------------
+  app:
+    build:
+      context: ./monolith
+      dockerfile: Dockerfile
+    image: ${IMAGE_NAME:-monolith}:${IMAGE_TAG:-week05}
+    container_name: library-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        # 等数据库 healthy 后再启动应用，避免连接被拒
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      # 容器内用服务名 mysql 访问数据库，端口为容器内 3306
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-library}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-libuser}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-lib123456}
+      # data.sql 幂等（CREATE TABLE IF NOT EXISTS + ON DUPLICATE KEY UPDATE）
+      SPRING_SQL_INIT_MODE: always
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    healthcheck:
+      # eclipse-temurin 基于 Ubuntu，自带 bash，用 /dev/tcp 探测端口，无需额外安装 curl
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - library-net
+
+volumes:
+  # 显式命名，便于文档中给出确定的卷名进行持久化验证
+  mysql-data:
+    name: library-mysql-data
+
+networks:
+  library-net:
+    name: library-net

@@ -1,0 +1,24 @@
+# ===== 本机环境变量（含真实密码，禁止提交）=====
+.env
+.env.local
+.env.*.local
+
+# 保留可公开的模板
+!.env.example
+
+# ===== 构建产物与日志 =====
+*.log
+run.log
+run.err
+build.log
+target/
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db

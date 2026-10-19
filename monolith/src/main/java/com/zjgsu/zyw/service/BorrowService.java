@@ -1,10 +1,11 @@
 package com.zjgsu.zyw.service;
 
-import com.zjgsu.zyw.pojo.BorrowRecord;
+import com.zjgsu.zyw.pojo.dto.BorrowRecordDTO;
+import com.zjgsu.zyw.pojo.enity.BorrowRecord;
 
 import java.util.List;
 
 public interface BorrowService {
-    public List<BorrowRecord> QueryRecordById(Integer id);
-    public Integer CreateRecord(BorrowRecord borrowRecord);
+    public List<BorrowRecord> getBorrowRecordById(Integer id);
+    public void CreateRecord(BorrowRecordDTO borrowRecordDTO);
 }

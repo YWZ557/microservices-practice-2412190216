@@ -212,3 +212,152 @@ spring:
     password: "123456"
     driver-class-name: com.mysql.cj.jdbc.Driver
 ```
+
+## 容器化部署
+
+### 1. 准备环境变量
+copy .env.example .env        # Windows
+cp .env.example .env          # macOS/Linux
+
+### 2. 一键启动
+docker compose up -d --build
+
+### 3. 查看状态
+docker compose ps
+
+### 4. 查看日志
+docker compose logs -f app
+
+### 5. 停止服务（保留数据）
+docker compose down
+
+### 6. 停止并清除数据卷
+docker compose down -v
+
+------
+
+## 容器化部署（Docker Compose）
+
+编排文件 `compose.yaml` 与应用镜像 `monolith/Dockerfile` 均位于仓库中，可一键构建并启动「Spring Boot 应用 + MySQL」两个服务。
+
+### 一、准备环境变量
+
+```bash
+# Windows
+copy .env.example .env
+# macOS / Linux
+cp .env.example .env
+```
+
+> `.env` 含真实密码，已被根目录 `.gitignore` 忽略，不要提交到 Git。
+> 本机已安装 MySQL 占用 3306 时，将 `.env` 中的 `MYSQL_PORT` 改为 `3307`。
+
+### 二、一键构建并启动
+
+```bash
+docker compose up -d --build
+```
+
+### 三、查看状态
+
+```bash
+docker compose ps
+```
+
+两个容器均应为 `Up (healthy)`：
+
+```
+NAME           IMAGE            STATUS                   PORTS
+library-app    monolith:week05  Up (healthy)             0.0.0.0:8080->8080/tcp
+library-mysql  mysql:8.0        Up (healthy)             0.0.0.0:3307->3306/tcp
+```
+
+### 四、查看日志
+
+```bash
+# 实时跟踪应用日志
+docker compose logs -f app
+
+# 查看数据库日志
+docker compose logs --tail 30 mysql
+```
+
+### 五、停止服务
+
+```bash
+# 停止并保留数据
+docker compose down
+
+# 停止并删除数据卷（数据会丢失，慎用）
+docker compose down -v
+```
+
+------
+
+## 接口验证（容器运行后）
+
+> PowerShell 中请使用 `curl.exe`，直接写 `curl` 会被解析为 `Invoke-WebRequest` 别名。
+
+### 1. 健康检查
+
+```bash
+curl.exe -i http://localhost:8080/actuator/health
+```
+
+预期返回：
+
+```http
+HTTP/1.1 200
+
+{"status":"UP","components":{"db":{"status":"UP","details":{"database":"MySQL"}}}}
+```
+
+`db` 组件为 `UP` 且 `database` 为 `MySQL`，说明应用已成功连接数据库容器。
+
+### 2. 查询图书列表
+
+```bash
+curl.exe -i http://localhost:8080/api/jpa/books
+```
+
+预期返回 `code` 为 `1`，`data` 为图书数组：
+
+```json
+{"code":1,"msg":"success","data":[{"id":1,"title":"Java 编程思想","availableCount":3}]}
+```
+
+### 3. 创建借阅记录（借书）
+
+```bash
+curl.exe -i -X POST http://localhost:8080/api/biz/borrow -H "Content-Type: application/json" -d '{\"bookId\":1,\"readerId\":2001}'
+```
+
+预期返回：
+
+```json
+{"code":1,"msg":"success","data":{"bookId":1,"readerId":2001,"status":"BORROWED"}}
+```
+
+> 业务规则：图书须为 `AVAILABLE` 且有库存；同一读者在借数量上限为 5 本。
+
+### 4. 按读者查询借阅记录（JPA 版）
+
+```bash
+curl.exe -i -X POST http://localhost:8080/api/jpa/records -H "Content-Type: application/json" -d '{\"readerId\":2001}'
+```
+
+预期返回该读者的借阅记录数组，包含步骤 3 创建的记录。
+
+### 5. 按读者查询借阅记录（MyBatis 版）
+
+```bash
+curl.exe -i http://localhost:8080/api/borrow/1001
+```
+
+预期返回读者 `1001` 的全部借阅记录。
+
+### 6. 基础接口
+
+```bash
+curl.exe -i http://localhost:8080/api/hello
+```

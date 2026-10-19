@@ -1,0 +1,29 @@
+# ===== 本地构建产物 =====
+target/
+build/
+out/
+*.jar
+*.war
+# ===== 版本控制与 IDE =====
+.git/
+.gitignore
+.gitattributes
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+# ===== 密码与本地环境 =====
+.env
+.env.*
+!.env.example
+# ===== 日志与临时文件 =====
+*.log
+run.log
+run.err
+*.tmp
+# ===== 文档（无需进镜像） =====
+docs/
+README.md
+HELP.md
