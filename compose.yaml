@@ -1,12 +1,21 @@
 # ============================================================
-# 图书馆借阅系统 · 容器编排（第 05 周）
+# 图书馆借阅系统 · 第 06 周微服务编排
 # ------------------------------------------------------------
 # 一键启动：docker compose up -d --build
+# 查看状态：docker compose ps
+# 查看日志：docker compose logs -f borrow-service
 # 停止（保留数据）：docker compose down
 # 停止并删除数据卷：docker compose down -v
 # ------------------------------------------------------------
-# 构建上下文指向 ./monolith，镜像由 monolith/Dockerfile 多阶段构建
-# 环境变量默认值见仓库根目录 .env.example（复制为 .env 后自动生效）
+# 拓扑：
+#   mysql（一个实例，三个独立数据库/账号）
+#     ├── library_user    -> user-service
+#     ├── library_book    -> book-service
+#     └── library_borrow  -> borrow-service
+#
+# 容器间通过 Compose 服务名通信：
+#   mysql:3306、user-service:8081、book-service:8082
+# 不使用 localhost 访问其他容器。
 # ============================================================
 
 name: library
@@ -18,30 +27,23 @@ services:
     image: mysql:8.0
     container_name: library-mysql
     restart: unless-stopped
-    # 官方 mysql 镜像的 entrypoint 会在首个参数以 '-' 开头时自动补上 mysqld，
-    # 因此这里只传 mysqld 的参数即可。
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-time-zone=+08:00
     environment:
       TZ: ${TZ:-Asia/Shanghai}
-      # root 密码为必填项，否则镜像拒绝启动
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
-      # 允许 root 从其它容器/主机连接，方便用客户端排查数据
       MYSQL_ROOT_HOST: "%"
-      # 首次启动自动创建业务库与业务账号
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-library}
-      MYSQL_USER: ${MYSQL_USER:-libuser}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-lib123456}
     ports:
-      # 宿主机端口可改（本地已装 MySQL 时改成 3307 即可）
-      - "${MYSQL_PORT:-3306}:3306"
+      # 宿主机 3306 被本地 MySQL 占用时，默认映射到 3307
+      - "${MYSQL_PORT:-3307}:3306"
     volumes:
-      # 命名卷：容器删除/重建后数据仍在
+      # 命名卷：容器删除/重建后数据仍然保留
       - mysql-data:/var/lib/mysql
+      # 首次初始化：创建三个独立数据库、三个账号及各自的表
+      - ./services/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      # 用 mysqladmin ping 判断数据库真正可用，供 app 的 depends_on 使用
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s
       timeout: 5s
@@ -50,31 +52,86 @@ services:
     networks:
       - library-net
 
-  # ---------------- Spring Boot 应用 ----------------
-  app:
+  # ---------------- 用户/读者服务 ----------------
+  user-service:
     build:
-      context: ./monolith
+      context: ./services/user-service
       dockerfile: Dockerfile
-    image: ${IMAGE_NAME:-monolith}:${IMAGE_TAG:-week05}
-    container_name: library-app
+    image: library/user-service:week06
+    container_name: library-user-service
     restart: unless-stopped
     depends_on:
       mysql:
-        # 等数据库 healthy 后再启动应用，避免连接被拒
         condition: service_healthy
     environment:
       TZ: ${TZ:-Asia/Shanghai}
-      # 容器内用服务名 mysql 访问数据库，端口为容器内 3306
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-library}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-libuser}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-lib123456}
-      # data.sql 幂等（CREATE TABLE IF NOT EXISTS + ON DUPLICATE KEY UPDATE）
-      SPRING_SQL_INIT_MODE: always
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/library_user?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: user_svc
+      SPRING_DATASOURCE_PASSWORD: user_pass
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${USER_SERVICE_PORT:-8081}:8081"
     healthcheck:
-      # eclipse-temurin 基于 Ubuntu，自带 bash，用 /dev/tcp 探测端口，无需额外安装 curl
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8081'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - library-net
+
+  # ---------------- 图书服务 ----------------
+  book-service:
+    build:
+      context: ./services/book-service
+      dockerfile: Dockerfile
+    image: library/book-service:week06
+    container_name: library-book-service
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/library_book?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: book_svc
+      SPRING_DATASOURCE_PASSWORD: book_pass
+    ports:
+      - "${BOOK_SERVICE_PORT:-8082}:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8082'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - library-net
+
+  # ---------------- 借阅服务 ----------------
+  borrow-service:
+    build:
+      context: ./services/borrow-service
+      dockerfile: Dockerfile
+    image: library/borrow-service:week06
+    container_name: library-borrow-service
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      book-service:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/library_borrow?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: borrow_svc
+      SPRING_DATASOURCE_PASSWORD: borrow_pass
+      READER_SERVICE_URL: http://user-service:8081
+      BOOK_SERVICE_URL: http://book-service:8082
+    ports:
+      - "${BORROW_SERVICE_PORT:-8083}:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8083'"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -83,7 +140,6 @@ services:
       - library-net
 
 volumes:
-  # 显式命名，便于文档中给出确定的卷名进行持久化验证
   mysql-data:
     name: library-mysql-data
 

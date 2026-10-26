@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.zjgsu.zyw</groupId>
+    <artifactId>library-system</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>library-system</name>
+    <description>图书馆系统微服务聚合工程</description>
+
+    <modules>
+        <module>user-service</module>
+        <module>book-service</module>
+        <module>borrow-service</module>
+    </modules>
+</project>

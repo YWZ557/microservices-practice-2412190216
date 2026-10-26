@@ -1,0 +1,19 @@
+sky:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: localhost
+    port: 3306
+    database: library
+    username: root
+    password: 123456
+  alioss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    # 密钥不入库，运行时通过环境变量注入：ALIYUN_ACCESS_KEY_ID / ALIYUN_ACCESS_KEY_SECRET
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}
+    bucket-name: sky-take-out
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 10
