@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zjgsu.zyw.mapper.UserMapper">
+    <select id="getUser" resultType="com.zjgsu.zyw.vo.UserVO">
+        select id, name, account_type, status, create_time from reader
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="accountType != null and accountType != ''">
+                and account_type = #{accountType}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+    <insert id="create">
+        insert into reader
+        <set>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="accountType != null">account_type = #{accountType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </set>
+    </insert>
+    <select id="getUserById" resultType="com.zjgsu.zyw.vo.UserVO">
+        select * from reader where id =#{id}
+    </select>
+    <update id="setTypeById">
+        update reader set account_type = #{accountType} where id =#{id}
+    </update>
+    <update id="setStatusById">
+        update reader set status = #{status} where id =#{id}
+    </update>
+    <select id="getUserByName" resultType="com.zjgsu.zyw.enity.User">
+        select * from reader where name = #{name}
+    </select>
+
+</mapper>

@@ -19,6 +19,9 @@ target/
 .vscode/
 .settings/
 
+# ===== Nacos 本地数据卷（在首次启动后生成）=====
+services/service-week7/monolith/nacos/
+
 # ===== 系统文件 =====
 .DS_Store
 Thumbs.db

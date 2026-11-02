@@ -1,0 +1,202 @@
+# ============================================================
+# 图书馆借阅系统 · 第 07 周：Nacos + MySQL + 四个微服务
+# ------------------------------------------------------------
+# 首次启动：
+#   1) docker compose up -d nacos        # 先初始化管理员密码
+#   2) docker compose up -d --build      # 再启动 MySQL 与各服务
+# 查看状态：docker compose ps
+# 查看日志：docker compose logs -f library-book
+# 停止（保留数据）：docker compose down
+# 停止并清空数据卷：docker compose down -v
+# ------------------------------------------------------------
+# 说明：不修改任何 Java 代码与 application.yaml，
+#       全部通过环境变量覆盖 yaml 中的 127.0.0.1 与数据源配置。
+# ============================================================
+
+name: zjgsu-library-week7
+
+# 各服务公共环境变量
+x-common-env: &common-env
+  TZ: Asia/Shanghai
+  # 容器内用 compose 服务名访问 Nacos，不能用 127.0.0.1
+  SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: nacos:8848
+  SPRING_CLOUD_NACOS_USERNAME: ${NACOS_USERNAME:-nacos}
+  SPRING_CLOUD_NACOS_PASSWORD: ${NACOS_PASSWORD:-123456}
+  # 覆盖 application-dev.yml 中的 sky.datasource.*
+  SKY_DATASOURCE_HOST: mysql
+  SKY_DATASOURCE_PORT: "3306"
+
+# 各服务公共构建配置
+x-service-build: &service-build
+  context: .
+  dockerfile: Dockerfile
+
+services:
+
+  # ---------------- Nacos 注册中心 ----------------
+  nacos:
+    image: nacos/nacos-server:v3.2.4
+    container_name: nacos-standalone
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_IDENTITY_KEY}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_IDENTITY_VALUE}
+      NACOS_AUTH_TOKEN_EXPIRE_SECONDS: ${NACOS_AUTH_TOKEN_EXPIRE_SECONDS:-18000}
+      JVM_XMS: 512m
+      JVM_XMX: 512m
+      JVM_XMN: 256m
+    ports:
+      - "18080:8080"   # 控制台（Nacos 3 控制台独立端口）
+      - "8848:8848"    # HTTP OpenAPI：注册与发现
+      - "9848:9848"    # gRPC 客户端端口
+      - "9849:9849"    # gRPC 服务端之间
+    volumes:
+      - ./nacos/data:/home/nacos/data
+      - ./nacos/logs:/home/nacos/logs
+    networks:
+      - library-net
+
+  # ---------------- MySQL ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: library-week7-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      # 本机 3307 已被本地 MySQL 占用，此处默认映射 3308
+      - "${MYSQL_PORT:-3308}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动执行：创建 library_user / library_book / library_borrow 三库及账号
+      - ../../db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - library-net
+
+  # ---------------- 用户/读者服务 ----------------
+  library-user:
+    build:
+      <<: *service-build
+      args:
+        MODULE: library-user
+    image: library/library-user:week07
+    container_name: library-user
+    restart: unless-stopped
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      # 注册到 Nacos 的地址：容器网络内用服务名，不能是 127.0.0.1
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: library-user
+      SKY_DATASOURCE_DATABASE: library_user
+      SKY_DATASOURCE_USERNAME: user_svc
+      SKY_DATASOURCE_PASSWORD: user_pass
+    ports:
+      - "8081:8081"
+    networks:
+      - library-net
+
+  # ---------------- 图书服务 ----------------
+  library-book:
+    build:
+      <<: *service-build
+      args:
+        MODULE: library-book
+    image: library/library-book:week07
+    container_name: library-book
+    restart: unless-stopped
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: library-book
+      SKY_DATASOURCE_DATABASE: library_book
+      SKY_DATASOURCE_USERNAME: book_svc
+      SKY_DATASOURCE_PASSWORD: book_pass
+    ports:
+      - "8082:8082"
+    networks:
+      - library-net
+
+  # ---------------- 借阅服务 ----------------
+  library-borrow:
+    build:
+      <<: *service-build
+      args:
+        MODULE: library-borrow
+    image: library/library-borrow:week07
+    container_name: library-borrow
+    restart: unless-stopped
+    depends_on:
+      nacos:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      library-book:
+        condition: service_started
+    environment:
+      <<: *common-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: library-borrow
+      SKY_DATASOURCE_DATABASE: library_borrow
+      SKY_DATASOURCE_USERNAME: borrow_svc
+      SKY_DATASOURCE_PASSWORD: borrow_pass
+    ports:
+      - "8083:8083"
+    networks:
+      - library-net
+
+  # ---------------- 网关 ----------------
+  library-gateway:
+    build:
+      <<: *service-build
+      args:
+        MODULE: library-gateway
+    image: library/library-gateway:week07
+    container_name: library-gateway
+    restart: unless-stopped
+    depends_on:
+      nacos:
+        condition: service_started
+      library-user:
+        condition: service_started
+      library-book:
+        condition: service_started
+      library-borrow:
+        condition: service_started
+    environment:
+      <<: *common-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: library-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - library-net
+
+volumes:
+  mysql-data:
+    name: library-week7-mysql-data
+
+networks:
+  library-net:
+    name: library-week7-net

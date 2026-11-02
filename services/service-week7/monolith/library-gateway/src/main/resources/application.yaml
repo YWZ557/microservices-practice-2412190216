@@ -1,0 +1,42 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: library-gateway
+  cloud:
+    nacos:
+      username: nacos
+      password: "123456"
+      discovery:
+        server-addr: 127.0.0.1:8848
+        group: PERSONAL_GROUP
+        ip: 127.0.0.1
+    gateway:
+      server: # ← 5.x 新增层级
+        webflux:                 # ← 5.x 新增层级
+          routes:
+            - id: library-user
+              uri: lb://library-user
+              predicates:
+                - Path=/user/**,/admin/**,/reader/**
+            - id: library-book
+              uri: lb://library-book
+              predicates:
+                - Path=/book/**
+            - id: library-borrow
+              uri: lb://library-borrow
+              predicates:
+                - Path=/borrow/**
+
+zyw:
+  jwt:
+    secret: zjgsu-library-management-system-secret-key-2026
+    expire-minutes: 120
+  auth:
+    excludePaths:
+      - /admin/login
+      - /reader/login
+      - /reader/loginout
+      - /admin/loginout
+      - /actuator/**
+

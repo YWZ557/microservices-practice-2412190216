@@ -1,0 +1,48 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: library-borrow
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+
+  datasource:
+    driver-class-name: ${sky.datasource.driver-class-name}
+    url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${sky.datasource.username}
+    password: ${sky.datasource.password}
+  cloud:
+    nacos:
+      username: nacos
+      password: "123456"
+      discovery:
+        server-addr: 127.0.0.1:8848
+        group: PERSONAL_GROUP
+        ip: 127.0.0.1
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml   # 原来错放在 configuration 下面，等于没生效
+  type-aliases-package: com.zjgsu.zyw.enity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.zjgsu.zyw.mapper: debug
+    com.zjgsu.zyw.service: info
+    com.zjgsu.zyw.controller: info
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+zyw:
+  jwt:
+    secret: zjgsu-library-management-system-secret-key-2026
+    expire-minutes: 120
