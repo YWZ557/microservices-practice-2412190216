@@ -20,4 +20,6 @@ public interface UserService {
     String adminLogin(UserLoginDTO userLoginDTO);
 
     String readerLogin(UserLoginDTO userLoginDTO);
+
+    UserVO getUserById(Integer id);
 }

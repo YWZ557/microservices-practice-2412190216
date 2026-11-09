@@ -6,6 +6,7 @@ import com.zjgsu.zyw.enity.User;
 import com.zjgsu.zyw.result.PageResult;
 import com.zjgsu.zyw.result.Result;
 import com.zjgsu.zyw.service.UserService;
+import com.zjgsu.zyw.vo.UserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,11 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @GetMapping("/{id}")
+    public Result getUserById(@PathVariable("id") Integer id){
+       UserVO userVO = userService.getUserById(id);
+       return Result.success(userVO);
+    }
     @PostMapping("/page")
     public Result pageSearch(@RequestBody UserPageDTO userPageDTO){
         PageResult pageResult = userService.pageSearch(userPageDTO);

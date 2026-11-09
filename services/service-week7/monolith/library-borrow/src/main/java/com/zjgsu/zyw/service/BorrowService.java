@@ -26,4 +26,6 @@ public interface BorrowService {
     void ReturnBook(Integer id);
 
     PageResult pageSearch(BorrowPageDTO borrowPageDTO);
+
+    void test(Integer id);
 }

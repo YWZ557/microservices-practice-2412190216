@@ -126,4 +126,9 @@ public class UserServiceImpl implements UserService {
         return token;
 
     }
+
+    @Override
+    public UserVO getUserById(Integer id) {
+        return userMapper.getUserById(id);
+    }
 }

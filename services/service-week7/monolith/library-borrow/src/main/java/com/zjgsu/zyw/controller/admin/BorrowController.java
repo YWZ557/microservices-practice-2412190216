@@ -78,5 +78,11 @@ public class BorrowController {
         borrowService.ReturnBook(id);
         return Result.success();
     }
+    @GetMapping("/test/{id}")
+    public Result test(@PathVariable("id")Integer id){
+        log.info("test{}",id);
+        borrowService.test(id);
+        return Result.success();
+    }
 
 }

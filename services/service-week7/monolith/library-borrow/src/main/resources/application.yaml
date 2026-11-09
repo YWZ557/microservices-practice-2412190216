@@ -22,6 +22,14 @@ spring:
         server-addr: 127.0.0.1:8848
         group: PERSONAL_GROUP
         ip: 127.0.0.1
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connectTimeout: 2000
+            readTimeout: 3000
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml   # 原来错放在 configuration 下面，等于没生效
   type-aliases-package: com.zjgsu.zyw.enity

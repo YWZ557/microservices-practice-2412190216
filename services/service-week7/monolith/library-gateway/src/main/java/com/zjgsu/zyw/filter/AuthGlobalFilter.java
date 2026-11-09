@@ -37,13 +37,9 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         }
 
         // 3. 获取token
-        String auth = request.getHeaders().getFirst("Authorization");
+        String token = request.getHeaders().getFirst("Authorization");
         // 4. 校验并解析token
 
-        String token = null;
-        if (auth != null && auth.startsWith("Bearer ")) {
-            token = auth.substring(7);
-        }
         Integer userId;
         try {
             userId = Integer.valueOf(jwtTool.parseToken(token).getSubject());
