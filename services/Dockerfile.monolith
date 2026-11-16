@@ -1,0 +1,62 @@
+# ============================================================
+# 图书馆业务模块通用镜像
+# 构建上下文：services/
+# 用法：docker build -f Dockerfile.monolith --build-arg MODULE=library-borrow -t library/library-borrow:week08 .
+# 说明：不修改 library-* 内的任何源码，只在构建阶段复制源码并打包指定模块（各模块独立 POM）。
+# ============================================================
+
+FROM maven:3.9-eclipse-temurin-25 AS build
+
+WORKDIR /build
+
+ARG MODULE
+
+# 阿里云镜像，加速容器内依赖下载
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+    '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">' \
+    '  <mirrors>' \
+    '    <mirror>' \
+    '      <id>aliyunmaven</id>' \
+    '      <mirrorOf>central</mirrorOf>' \
+    '      <name>Aliyun Maven Central</name>' \
+    '      <url>https://maven.aliyun.com/repository/central</url>' \
+    '    </mirror>' \
+    '  </mirrors>' \
+    '</settings>' \
+    > /root/.m2/settings.xml
+
+# 先复制 POM，利用 Docker 层缓存依赖
+COPY pom.xml pom.xml
+COPY library-user/pom.xml library-user/pom.xml
+COPY library-book/pom.xml library-book/pom.xml
+COPY library-borrow/pom.xml library-borrow/pom.xml
+COPY library-gateway/pom.xml library-gateway/pom.xml
+
+RUN mvn -B -q -pl "${MODULE}" -am -DskipTests dependency:go-offline || true
+
+# 再复制源码（各模块独立构建，不再有 common/api 模块）
+COPY library-user/src library-user/src
+COPY library-book/src library-book/src
+COPY library-borrow/src library-borrow/src
+COPY library-gateway/src library-gateway/src
+
+RUN mvn -B -pl "${MODULE}" -am -DskipTests clean package
+
+FROM eclipse-temurin:25-jre
+
+WORKDIR /app
+
+ARG MODULE
+
+# 预建 home 与 nacos 客户端日志目录，避免以 appuser 运行时日志写入报错
+RUN useradd -r -m -d /home/appuser -u 1001 appuser \
+    && mkdir -p /home/appuser/logs/nacos \
+    && chown -R appuser:appuser /home/appuser
+
+COPY --from=build /build/${MODULE}/target/${MODULE}-*.jar /app/app.jar
+RUN chown appuser:appuser /app/app.jar
+
+USER appuser
+
+# 容器内把注册 IP 从 127.0.0.1 改为容器自身 IP；不修改 application.yaml
+ENTRYPOINT ["sh", "-c", "export SPRING_CLOUD_NACOS_DISCOVERY_IP=$(hostname -i | awk '{print $1}'); exec java -jar /app/app.jar"]

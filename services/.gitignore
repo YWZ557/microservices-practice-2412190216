@@ -1,0 +1,10 @@
+target/
+**/target/
+*.log
+.env
+.idea/
+*.iml
+
+# Nacos 本地运行数据
+nacos/data/
+nacos/logs/

@@ -1,0 +1,6 @@
+**/target
+**/nacos
+**/*.log
+**/.idea
+**/*.iml
+.env

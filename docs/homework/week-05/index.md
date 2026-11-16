@@ -219,11 +219,11 @@ $ curl http://localhost:8080/actuator/health
 
 ### 5.6 截图索引
 
-![a39bb8b092c6a06f32c5db9d1aed54df](D:\microservices‑practice‑2412190216\docs\homework\week-05\screenshots\a39bb8b092c6a06f32c5db9d1aed54df.png)
+![a39bb8b092c6a06f32c5db9d1aed54df](D:\microservices-practice-2412190216\docs\homework\week-05\screenshots\a39bb8b092c6a06f32c5db9d1aed54df.png)
 
 
 
-![26c02470ddf401476c475ee343bb4b44](D:\microservices‑practice‑2412190216\docs\homework\week-05\screenshots\26c02470ddf401476c475ee343bb4b44.png)
+![26c02470ddf401476c475ee343bb4b44](D:\microservices-practice-2412190216\docs\homework\week-05\screenshots\26c02470ddf401476c475ee343bb4b44.png)
 
 ## 六、业务接口验证
 
@@ -330,11 +330,11 @@ curl.exe -i -X POST http://localhost:8080/api/jpa/records -H "Content-Type: appl
 
 ### 6.6 截图索引
 
-![8d55ad8fd86d12f8ad51eed785eabc6c](D:\microservices‑practice‑2412190216\docs\homework\week-05\screenshots\8d55ad8fd86d12f8ad51eed785eabc6c.png)
+![8d55ad8fd86d12f8ad51eed785eabc6c](D:\microservices-practice-2412190216\docs\homework\week-05\screenshots\8d55ad8fd86d12f8ad51eed785eabc6c.png)
 
-![9a404042dbe71de76cdb7e8fb9c1beb1](D:\microservices‑practice‑2412190216\docs\homework\week-05\screenshots\9a404042dbe71de76cdb7e8fb9c1beb1.png)
+![9a404042dbe71de76cdb7e8fb9c1beb1](D:\microservices-practice-2412190216\docs\homework\week-05\screenshots\9a404042dbe71de76cdb7e8fb9c1beb1.png)
 
-![f96e019cd9380a31a391a9440371c06a](D:\microservices‑practice‑2412190216\docs\homework\week-05\screenshots\f96e019cd9380a31a391a9440371c06a.png)
+![f96e019cd9380a31a391a9440371c06a](D:\microservices-practice-2412190216\docs\homework\week-05\screenshots\f96e019cd9380a31a391a9440371c06a.png)
 
 ## 七、数据持久化验证
 

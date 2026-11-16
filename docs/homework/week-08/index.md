@@ -146,7 +146,7 @@ sequenceDiagram
 ### 3.2 构建与启动
 
 ```powershell
-cd D:\microservices‑practice‑2412190216\services
+cd D:\microservices-practice-2412190216\services
 mvn -DskipTests clean install
 ```
 
@@ -616,7 +616,7 @@ $headers = @{ Authorization = "Bearer $($r.data)" }
 前置条件：`library-user` 8081、`library-book` 8082、`library-borrow` 8083 均已启动；`book` 表中 `id=1` 的记录状态为 `AVAILABLE`；`reader` 表中存在 `id=2` 且 `status=1` 的读者。
 
 ```powershell
-cd D:\microservices‑practice‑2412190216
+cd D:\microservices-practice-2412190216
 powershell -ExecutionPolicy Bypass -File .\scripts\e2e-test.ps1
 ```
 

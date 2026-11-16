@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.zjgsu.zyw</groupId>
+    <artifactId>services</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>services</name>
+    <description>图书馆微服务：各模块独立构建，不再继承父 POM，也不依赖 common/api</description>
+
+    <!-- 仅作为聚合构建入口；各模块的依赖与插件版本在各自 pom 中声明 -->
+    <modules>
+        <module>library-user</module>
+        <module>library-gateway</module>
+        <module>library-book</module>
+        <module>library-borrow</module>
+    </modules>
+</project>

@@ -361,3 +361,85 @@ curl.exe -i http://localhost:8080/api/borrow/1001
 ```bash
 curl.exe -i http://localhost:8080/api/hello
 ```
+
+------
+
+## 网关鉴权与受保护接口的角色校验规则（Week 09）
+
+网关 `services/library-gateway`（8080）是所有外部请求的唯一入口，统一完成 JWT 鉴权与角色校验，下游服务不再各自解析 token。
+
+### 1. 请求头约定
+
+| 请求头 | 来源 | 说明 |
+| --- | --- | --- |
+| `Authorization` | 客户端 | 登录接口返回的 token 原值，**不带** `Bearer ` 前缀 |
+| `user-info` | 网关写入 | 验签后的用户 id，下游据此识别当前用户 |
+
+下游服务只读取 `user-info`，不重复校验 token。
+
+### 2. 鉴权流程
+
+1. 请求路径命中白名单 → 直接放行；
+2. 未携带 `Authorization` 或 token 验签失败（含过期）→ 返回 `401`；
+3. 路径含 `admin` 且 token 角色不是 `ADMIN` → 返回 `403`；
+4. 路径含 `reader` 且 token 角色不是 `READER` → 返回 `403`；
+5. 校验通过后写入 `user-info` 并转发到下游服务。
+
+角色取自 token 的 `role` claim（`ADMIN` / `READER`），由 `library-user` 登录时签发。
+
+### 3. 白名单（无需 token）
+
+```text
+/actuator/**
+/admin/login
+/admin/loginout
+/reader/login
+/reader/loginout
+/reader/register
+```
+
+### 4. 受保护接口的角色校验规则
+
+| 接口路径 | 允许角色 | 其他角色访问 |
+| --- | --- | --- |
+| `/user/admin/**` | ADMIN | 403 |
+| `/book/admin/**` | ADMIN | 403 |
+| `/borrow/admin/**` | ADMIN | 403 |
+| `/user/reader/**` | READER | 403 |
+| `/book/reader/**` | READER | 403 |
+| `/borrow/reader/**` | READER | 403 |
+
+### 5. 验证命令
+
+```powershell
+# ① 无 token 访问受保护接口 → 401
+curl.exe -i -X POST http://localhost:8080/user/admin/page `
+  -H "Content-Type: application/json" -d '{"page":1,"pageSize":3}'
+
+# ② 读者 token 调管理端 → 403
+$rt = (Invoke-RestMethod -Uri http://localhost:8080/reader/login -Method POST `
+  -ContentType 'application/json' -Body '{"username":"test_reader01","password":"123456"}').data
+curl.exe -i -X POST http://localhost:8080/user/admin/page `
+  -H "Authorization: $rt" -H "Content-Type: application/json" -d '{"page":1,"pageSize":3}'
+
+# ③ 管理员 token 调管理端 → 200
+$at = (Invoke-RestMethod -Uri http://localhost:8080/admin/login -Method POST `
+  -ContentType 'application/json' -Body '{"username":"admin","password":"123456"}').data
+curl.exe -i -X POST http://localhost:8080/user/admin/page `
+  -H "Authorization: $at" -H "Content-Type: application/json" -d '{"page":1,"pageSize":3}'
+
+# ④ 健康检查放行 → 200
+curl.exe http://localhost:8080/actuator/health
+```
+
+预期依次为 `401`、`403`、`200`、`{"status":"UP"}`。
+
+### 6. 已知限制与后续加固方向
+
+当前实现已覆盖“未登录拦截”和“角色不匹配拦截”，以下三项属于后续加固内容，尚未落地：
+
+1. **伪造身份头**：网关目前只覆盖 `user-info`，未显式清除客户端传入的同名头，也未注入 `X-User-Role` 供下游二次校验；
+2. **下游二次校验**：`JwtTokenAdminInterceptor` / `JwtTokenReaderInterceptor` 仅读取 `user-info`，不校验角色；
+3. **绕过网关直连**：`compose.yaml` 中 user-service（8081）、borrow-service（8083）仍映射宿主机端口，理论上可绕过网关直接访问。
+
+加固方式：网关在过滤链最前面删除 `user-info`、`X-User-Role`，验签后重新注入；下游拦截器校验 `X-User-Role`；compose 中下游只保留 `expose`，不映射宿主机端口。
